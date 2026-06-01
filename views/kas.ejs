@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Kas RT 09</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-wallet2 me-2"></i>KAS RT 09</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="/">Data IPL Warga</a></li>
+                    <li class="nav-item"><a class="nav-link active fw-semibold" href="/kas">Laporan Kas</a></li>
+                    <li class="nav-item text-white-50 px-3 small">| Login: <%= namaUser %> (<%= role.toUpperCase() %>)</li>
+                    <li class="nav-item"><a class="btn btn-sm btn-outline-danger" href="/logout">Keluar</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <% 
+            let totalMasuk = 0;
+            let totalKeluar = 0;
+            let saldoBukuKasTerakhir = 0;
+            
+            // 1. Hitung total pemasukan & pengeluaran kas berdasarkan filter periode yang aktif
+            kasData.forEach(row => {
+                const tgl = row.get('tanggal') || '';
+                const formatPeriodeRow = tgl.includes('-') ? `${tgl.split('-')[0]}-${tgl.split('-')[1]}` : '';
+                
+                if (periodeAktif === "Semua" || formatPeriodeRow === periodeAktif) {
+                    let pemRow = row.get('pemasukan') ? row.get('pemasukan').toString().replace(/[^0-9.-]/g, "") : "0";
+                    let pengRow = row.get('pengeluaran') ? row.get('pengeluaran').toString().replace(/[^0-9.-]/g, "") : "0";
+                    
+                    totalMasuk += parseFloat(pemRow) || 0;
+                    totalKeluar += parseFloat(pengRow) || 0;
+                }
+            });
+
+            // 2. Hitung akumulasi murni kas keseluruhan (kumulatif dari baris awal sampai akhir)
+            let akumulasiMasukSemua = 0;
+            let akumulasiKeluarSemua = 0;
+            
+            kasData.forEach(row => {
+                let pemAll = row.get('pemasukan') ? row.get('pemasukan').toString().replace(/[^0-9.-]/g, "") : "0";
+                let pengAll = row.get('pengeluaran') ? row.get('pengeluaran').toString().replace(/[^0-9.-]/g, "") : "0";
+                
+                akumulasiMasukSemua += parseFloat(pemAll) || 0;
+                akumulasiKeluarSemua += parseFloat(pengAll) || 0;
+            });
+            
+            saldoBukuKasTerakhir = akumulasiMasukSemua - akumulasiKeluarSemua;
+
+            // 3. Rumus Sinkronisasi Dashboard Utama
+            let saldoKasAktual = saldoBukuKasTerakhir + totalIPL;
+        %>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm border-start border-primary border-4 p-3 bg-white">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 11px;">Total Masuk IPL Warga</small>
+                    <h4 class="text-primary fw-bold mb-0">Rp <%= totalIPL.toLocaleString('id-ID') %></h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm border-start border-success border-4 p-3 bg-white">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 11px;">Pemasukan Kas Periode Ini</small>
+                    <h4 class="text-success fw-bold mb-0">Rp <%= totalMasuk.toLocaleString('id-ID') %></h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm border-start border-danger border-4 p-3 bg-white">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 11px;">Pengeluaran Kas Periode Ini</small>
+                    <h4 class="text-danger fw-bold mb-0">Rp <%= totalKeluar.toLocaleString('id-ID') %></h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm border-start border-warning border-4 p-3 bg-white">
+                    <small class="text-uppercase text-muted fw-bold d-block mb-1" style="font-size: 11px;">Saldo Kas Aktual (Kas + IPL)</small>
+                    <h4 class="text-warning fw-bold mb-0">Rp <%= saldoKasAktual.toLocaleString('id-ID') %></h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                
+                <form action="/kas" method="GET" class="d-flex align-items-center gap-2">
+                    <label class="fw-semibold text-secondary text-nowrap mb-0 small">Filter Bulan:</label>
+                    <select name="periode" class="form-select form-select-sm border-secondary-subtle" onchange="this.form.submit()" style="min-width: 160px;">
+                        <option value="Semua" <%= periodeAktif === 'Semua' ? 'selected' : '' %>>-- Semua Transaksi --</option>
+                        <% daftarFilterPeriode.forEach(p => { 
+                            let thn = p.split('-')[0];
+                            let blnNama = getNamaBulanIndo(p.split('-')[1]);
+                        %>
+                            <option value="<%= p %>" <%= periodeAktif === p ? 'selected' : '' %>><%= blnNama %> <%= thn %></option>
+                        <% }) %>
+                    </select>
+                </form>
+
+                <% if (role === 'admin') { %>
+                    <div class="d-flex gap-2">
+                        <a href="/kas/tambah?jenis=pemasukan" class="btn btn-sm btn-success fw-bold"><i class="bi bi-plus-circle me-1"></i> + Pemasukan Kas</a>
+                        <a href="/kas/tambah?jenis=pengeluaran" class="btn btn-sm btn-danger fw-bold"><i class="bi bi-dash-circle me-1"></i> + Pengeluaran Kas</a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+            <div class="card-header bg-white py-3 border-bottom border-light">
+                <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-list-stars me-2 text-primary"></i>Daftar Detail Mutasi Transaksi Kas Keuangan</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 14px;">
+                    <thead class="table-dark text-uppercase small" style="letter-spacing: 0.5px;">
+                        <tr>
+                            <th class="text-center" style="width: 60px;">No</th>
+                            <th style="width: 120px;">Tanggal</th>
+                            <th style="width: 120px;">Bulan</th>
+                            <th>Keterangan / Deskripsi Acara</th>
+                            <th class="text-end" style="width: 150px;">Pemasukan</th>
+                            <th class="text-end" style="width: 150px;">Pengeluaran</th>
+                            <th class="text-end" style="width: 160px;">Running Saldo</th>
+                            <% if (role === 'admin') { %><th class="text-center" style="width: 110px;">Aksi</th><% } %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% 
+                            let counter = 1;
+                            // Membalik urutan agar transaksi terbaru muncul di atas tabel
+                            let dataTerbalik = [...kasData].reverse(); 
+                            
+                            dataTerbalik.forEach(row => {
+                                const tgl = row.get('tanggal') || '';
+                                const formatPeriodeRow = tgl.includes('-') ? `${tgl.split('-')[0]}-${tgl.split('-')[1]}` : '';
+                                
+                                if (periodeAktif === "Semua" || formatPeriodeRow === periodeAktif) {
+                                    let pem = parseFloat(row.get('pemasukan') ? row.get('pemasukan').toString().replace(/[^0-9.-]/g, "") : 0) || 0;
+                                    let peng = parseFloat(row.get('pengeluaran') ? row.get('pengeluaran').toString().replace(/[^0-9.-]/g, "") : 0) || 0;
+                                    let sld = row.get('saldo') || '0';
+
+                                    // ================= ENGINE DETEKSI BULAN MANUAL-AUTOMATIC HYBRID =================
+                                    let namaBulanTabel = "-";
+                                    if (tgl) {
+                                        let pemisah = tgl.includes('-') ? '-' : (tgl.includes('/') ? '/' : '');
+                                        if (pemisah !== '') {
+                                            let bagianTanggal = tgl.split(pemisah);
+                                            
+                                            // Format Global: YYYY-MM-DD (e.g. 2026-05-25)
+                                            if (bagianTanggal[0].length === 4) {
+                                                namaBulanTabel = getNamaBulanIndo(bagianTanggal[1]);
+                                            } 
+                                            // Format Indonesia: DD/MM/YYYY atau DD-MM-YYYY (e.g. 25/05/2026)
+                                            else if (bagianTanggal[2] && bagianTanggal[2].length === 4) {
+                                                namaBulanTabel = getNamaBulanIndo(bagianTanggal[1]);
+                                            }
+                                            // Format Alternatif: MM/DD/YYYY
+                                            else {
+                                                namaBulanTabel = getNamaBulanIndo(bagianTanggal[0]);
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Backup Lapisan Terakhir: Ambil langsung dari teks kolom 'bulan' di Google Sheet jika parsing di atas meleset
+                                    if (namaBulanTabel === "-" || namaBulanTabel === "") {
+                                        namaBulanTabel = row.get('bulan') || "-";
+                                    }
+                                    // ===============================================================================
+                        %>
+                            <tr>
+                                <td class="text-center fw-bold text-muted"><%= counter++ %></td>
+                                <td class="font-monospace text-secondary"><%= tgl %></td>
+                                <td><span class="badge bg-light text-dark border px-2 py-1"><%= namaBulanTabel %></span></td>
+                                <td class="fw-semibold text-dark text-wrap"><%= row.get('keterangan') %></td>
+                                <td class="text-end font-monospace fw-bold <%= pem > 0 ? 'text-success' : 'text-muted-50' %>">
+                                    <%= pem > 0 ? 'Rp ' + pem.toLocaleString('id-ID') : '-' %>
+                                </td>
+                                <td class="text-end font-monospace fw-bold <%= peng > 0 ? 'text-danger' : 'text-muted-50' %>">
+                                    <%= peng > 0 ? 'Rp ' + peng.toLocaleString('id-ID') : '-' %>
+                                </td>
+                                <td class="text-end font-monospace fw-bold text-dark bg-light-subtle">
+                                    Rp <%= sld %>
+                                </td>
+                                <% if (role === 'admin') { %>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/kas/edit/<%= row.get('no') %>" class="btn btn-outline-warning" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                                            <a href="/kas/hapus/<%= row.get('no') %>" class="btn btn-outline-danger" title="Hapus" onclick="return confirm('Apakah Anda yakin ingin menghapus data mutasi kas ini?')"><i class="bi bi-trash"></i></a>
+                                        </div>
+                                    </td>
+                                <% } %>
+                            </tr>
+                        <% 
+                                }
+                            }); 
+                            if (counter === 1) { 
+                        %>
+                            <tr>
+                                <td colspan="<%= role === 'admin' ? 8 : 7 %>" class="text-center text-muted py-5">
+                                    <i class="bi bi-folder-x d-block display-6 mb-2"></i>
+                                    Tidak ada catatan transaksi kas pada periode bulan ini.
+                                </td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="text-center text-muted mt-5 mb-4 small">
+            Sistem Informasi Pengelolaan Laporan Keuangan RT 09 &copy; 2026
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

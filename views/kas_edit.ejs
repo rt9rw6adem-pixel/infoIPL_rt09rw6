@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Transaksi Kas RT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5" style="max-width: 600px;">
+        <div class="mb-3"><a href="/kas" class="text-decoration-none text-secondary fw-semibold">← Kembali ke Laporan Kas</a></div>
+        <div class="card shadow border-0">
+            <div class="card-header bg-warning text-dark py-3">
+                <h5 class="mb-0 fw-bold">Form Edit Transaksi Kas</h5>
+            </div>
+            <div class="card-body p-4">
+                <form action="/kas/update/<%= kas.get('no') %>" method="POST">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tanggal Transaksi</label>
+                        <input type="date" name="tanggal" class="form-control form-control-lg border-secondary" value="<%= kas.get('tanggal') %>" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Keterangan / Deskripsi Transaksi</label>
+                        <textarea name="keterangan" class="form-control border-secondary" rows="3" required><%= kas.get('keterangan') %></textarea>
+                    </div>
+
+                    <div class="row bg-light p-3 rounded border my-4 m-0">
+                        <% 
+                            let nominalPem = kas.get('pemasukan') ? kas.get('pemasukan').toString().replace(/[^0-9]/g, "") : "0";
+                            let nominalPeng = kas.get('pengeluaran') ? kas.get('pengeluaran').toString().replace(/[^0-9]/g, "") : "0";
+                        %>
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="form-label text-success fw-bold">Pemasukan (Rp)</label>
+                            <input type="number" name="pemasukan" class="form-control fw-bold font-monospace text-success border-success" value="<%= parseInt(nominalPem) || 0 %>" min="0" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-danger fw-bold">Pengeluaran (Rp)</label>
+                            <input type="number" name="pengeluaran" class="form-control fw-bold font-monospace text-danger border-danger" value="<%= parseInt(nominalPeng) || 0 %>" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between pt-2 border-top">
+                        <a href="/kas" class="btn btn-light px-4 border">Batal</a>
+                        <button type="submit" class="btn btn-warning fw-bold text-dark px-4 shadow-sm">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan IPL Warga</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .kolom-nama { min-width: 180px; text-transform: uppercase; }
+        .table th { font-size: 13px; text-transform: uppercase; }
+        .table td { font-size: 14px; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container-fluid px-4 mt-3">
+        
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 bg-white p-3 rounded shadow-sm mb-3">
+            <div class="d-flex align-items-center gap-2">
+                <a href="/" class="btn btn-primary fw-bold btn-sm">📋 Laporan IPL Warga</a>
+                <a href="/kas" class="btn btn-outline-dark btn-sm">💰 Laporan Kas RT</a>
+            </div>
+            <div class="d-flex align-items-center gap-3 ms-md-auto">
+                <div class="text-secondary small text-end">Halo, <strong><%= namaUser %></strong> <br><span class="badge bg-secondary"><%= role.toUpperCase() %></span></div>
+                <a href="/logout" class="btn btn-outline-danger btn-sm fw-bold">Logout</a>
+            </div>
+        </div>
+        
+        <div class="mb-3 d-flex justify-content-between align-items-center bg-white p-3 rounded shadow-sm">
+            <div class="btn-group">
+                <% daftarTahun.forEach(th => { %>
+                    <a href="/?tahun=<%= th %>" class="btn <%= tahunAktif === th ? 'btn-primary fw-bold' : 'btn-outline-primary' %> btn-sm">Tahun <%= th %></a>
+                <% }) %>
+            </div>
+            <h5 class="text-secondary mb-0 small">Tahun Aktif: <span class="badge bg-success"><%= tahunAktif %></span></h5>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <h5 class="mb-0">Data Laporan IPL Warga</h5>
+                <div class="d-flex gap-2">
+                    <input type="text" id="pencarian" class="form-control form-control-sm" placeholder="Cari Nama/Blok..." style="max-width: 250px;">
+                    <% if (role === 'admin') { %> <a href="/tambah?tahun=<%= tahunAktif %>" class="btn btn-success btn-sm text-nowrap">+ Tambah Data</a> <% } %>
+                </div>
+            </div>
+            <div class="card-body p-0 table-responsive">
+                <table class="table table-bordered table-striped table-hover align-middle mb-0 text-nowrap">
+                    <thead class="table-secondary text-center align-middle">
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th class="text-start">Nama Kepala Keluarga</th>
+                            <th style="width: 100px;">Blok</th>
+                            <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>Mei</th><th>Jun</th>
+                            <th>Jul</th><th>Ags</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th>
+                            <th class="bg-dark text-white">THR</th>
+                            <% if (role === 'admin') { %> <th style="width: 80px;">Aksi</th> <% } %>
+                        </tr>
+                    </thead>
+                    <tbody id="tabel-warga">
+                        <% if (warga.length === 0) { %>
+                            <tr><td colspan="<%= role === 'admin' ? 17 : 16 %>" class="text-center p-4">Belum ada data warga di tahun <%= tahunAktif %>.</td></tr>
+                        <% } else { warga.forEach(row => { %>
+                                <tr class="baris-data">
+                                    <td class="text-center text-muted"><%= row.get('no') %></td>
+                                    <td class="text-start px-3 kolom-nama text-dark fw-semibold"><%= row.get('nama_kk') %></td>
+                                    <td class="text-center kolom-blok fw-bold text-secondary"><%= row.get('blok_rumah') %></td>
+                                    <td><%= row.get('Januari') || '-' %></td><td><%= row.get('Februari') || '-' %></td>
+                                    <td><%= row.get('Maret') || '-' %></td><td><%= row.get('April') || '-' %></td>
+                                    <td><%= row.get('Mei') || '-' %></td><td><%= row.get('Juni') || '-' %></td>
+                                    <td><%= row.get('Juli') || '-' %></td><td><%= row.get('Agustus') || '-' %></td>
+                                    <td><%= row.get('September') || '-' %></td><td><%= row.get('Oktober') || '-' %></td>
+                                    <td><%= row.get('November') || '-' %></td><td><%= row.get('Desember') || '-' %></td>
+                                    
+                                    <td class="text-end text-success fw-bold table-success"><%= row.get('THR') || '-' %></td>
+                                    
+                                    <% if (role === 'admin') { %>
+                                        <td class="text-center"><a href="/edit/<%= row.get('no') %>?tahun=<%= tahunAktif %>" class="btn btn-warning btn-sm py-0 px-2">Edit</a></td>
+                                    <% } %>
+                                </tr>
+                        <% }) } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('pencarian').addEventListener('input', function() {
+            const k = this.value.toLowerCase();
+            document.querySelectorAll('.baris-data').forEach(b => {
+                const n = b.querySelector('.kolom-nama').textContent.toLowerCase();
+                const bl = b.querySelector('.kolom-blok').textContent.toLowerCase();
+                b.style.display = (n.includes(k) || bl.includes(k)) ? "" : "none";
+            });
+        });
+    </script>
+</body>
+</html>

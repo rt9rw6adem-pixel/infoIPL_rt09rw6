@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Transaksi Kas RT</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5" style="max-width: 600px;">
+        <div class="card shadow border-0">
+            <div class="card-header bg-success text-white py-3"><h5 class="mb-0 fw-bold">Form Input Buku Kas RT</h5></div>
+            <div class="card-body p-4">
+                <form action="/kas/simpan" method="POST">
+                    <div class="mb-3"><label class="form-label fw-bold">Tanggal Transaksi</label><input type="date" name="tanggal" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label fw-bold">Keterangan Transaksi</label><input type="text" name="keterangan" class="form-control" placeholder="Contoh: BAYAR SETORAN SAMPAH" required></div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Kategori Bulan Laporan</label>
+                        <select name="bulan" class="form-select" required>
+                            <option value="" disabled selected>-- Pilih Bulan --</option>
+                            <% daftarBulan.forEach(bln => { %> <option value="<%= bln %>"><%= bln %></option> <% }) %>
+                        </select>
+                    </div>
+                    <div class="row bg-light p-3 rounded border my-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <label class="form-label text-success fw-bold">Penerimaan / Pemasukan (Rp)</label>
+                            <input type="number" name="pemasukan" class="form-control text-success" placeholder="0" min="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-danger fw-bold">Pengeluaran (Rp)</label>
+                            <input type="number" name="pengeluaran" class="form-control text-danger" placeholder="0" min="0">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="/kas" class="btn btn-secondary">Batal / Kembali</a>
+                        <button type="submit" class="btn btn-success fw-bold">Simpan Transaksi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
