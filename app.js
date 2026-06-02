@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const session = require('express-session');
 const { JWT } = require('google-auth-library');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
@@ -87,13 +87,30 @@ async function hitungUlangSaldoKas(sheetKas) {
   }
 }
 
-// ================= INITIALIZE GOOGLE SHEETS API =================
-const creds = require('./credentials.json');
+// ================= INITIALIZE GOOGLE SHEETS API (FIXED FOR VERCEL) =================
+// Sistem otomatis: Pakai Environment Variables jika ada (Vercel), jika tidak ada, pakai file lokal credentials.json (Laptop)
+let clientEmail, privateKey;
+
+if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
+  clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  // Memaksa Vercel menerjemahkan \n menjadi baris baru asli agar Google Auth tidak crash
+  privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+} else {
+  try {
+    const creds = require('./credentials.json');
+    clientEmail = creds.client_email;
+    privateKey = creds.private_key;
+  } catch (e) {
+    console.error("PERINGATAN: File credentials.json tidak ditemukan dan Env Variables kosong!");
+  }
+}
+
 const serviceAccountAuth = new JWT({
-  email: creds.client_email,
-  key: creds.private_key,
+  email: clientEmail,
+  key: privateKey,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
+
 const doc = new GoogleSpreadsheet(process.env.GOOGLE_SHEET_ID, serviceAccountAuth);
 
 async function mulaiServer() {
